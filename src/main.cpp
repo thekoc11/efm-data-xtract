@@ -2,10 +2,10 @@
 #include <filesystem>
 #include <chrono>
 #include <string>
-#include "filter.hpp"
-#include "fileops.hpp"
-#include "ThreadPool.hpp"
-const char *filter_descr = "lowpass=frequency=8000 [b]; [b] aresample=8000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]showcqt=basefreq=65.4064:endfreq=987.77:no_video=1:storepath=/media/theko/UsbStorage1/cqt/test.txt"; //showcqt=tc=0.17:tlength='st(0,0.17); 384*tc / (384 / ld(0) + tc*f /(1-ld(0))) + 384*tc / (tc*f / ld(0) + 384 /(1-ld(0)))':sono_v=a_weighting(f)*16:sono_h=980"; // dynaudnorm [a]; [a] lowpass=frequency=4000 [b]; [b] aresample=4000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]
+#include "../inc/filter.hpp"
+#include "../inc/fileops.hpp"
+#include "taskflow/taskflow.hpp"
+//const char *filter_descr = "lowpass=frequency=8000 [b]; [b] aresample=8000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]showcqt=basefreq=65.4064:endfreq=987.77:no_video=1:storepath=/media/theko/UsbStorage1/cqt/temp.txt"; //showcqt=tc=0.17:tlength='st(0,0.17); 384*tc / (384 / ld(0) + tc*f /(1-ld(0))) + 384*tc / (tc*f / ld(0) + 384 /(1-ld(0)))':sono_v=a_weighting(f)*16:sono_h=980"; // dynaudnorm [a]; [a] lowpass=frequency=4000 [b]; [b] aresample=4000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]
 //const char *filter_descr = "aresample=8000,aformat=sample_fmts=s16:channel_layouts=mono"; s=192x108:
 namespace fs = std::filesystem;
 namespace ch = std::chrono;
@@ -18,20 +18,18 @@ struct AudioData{
     int nb_samples{};
 };
 
-std::mutex m;
 
-static int ApplyFilter(const char* filename);
-static void PrintFnames(const char* filename);
-static void ThreadRun(const char* folder, uint num_threads);
+static int ApplyFilter(const char* filename, const char* filter_descr);
+
 int main(int argc, char** argv) {
 
     vector<AudioData> data{};
     AudioData dat_pkt{};
-    const uint num_threads = thread::hardware_concurrency();
 
+    tf::Executor executor;
+    tf::Taskflow taskflow;
 
-    /*
-     * initialize all mutii*/
+    fs::path dataRoot = "/media/theko/UsbStorage1/cqt/";
 
     if (argc == 2)
     {
@@ -58,31 +56,44 @@ int main(int argc, char** argv) {
         vector<fs::path> files = GetFilesInPath(argv[1]);
         cout << "received Vector size: " << files.size() << endl;
 
+        int iter = 0;
+        auto start = ch::high_resolution_clock::now();
 
+        while(iter < files.size())
+        {
+            const char* e = files[iter].c_str();
+            string filt_text = "lowpass=frequency=8000 [b]; [b] aresample=8000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]showcqt=no_video=1:storepath=";
+            string datFileName = dataRoot.string().append(files[iter].stem().concat("_cqt.txt"));
+            filt_text.append(datFileName);
+//            cout << "Final Format string: " << filt_text << endl;
+            taskflow.emplace([e, filt_text] () {
+                cout << "File encountered: " << e << endl;
+                ApplyFilter(e, filt_text.c_str());
+            });
+            iter++;
+        }
 
-
-        ThreadRun(argv[1], num_threads);
         cout << "All Threads at work? \n";
+        executor.run(taskflow).wait();
+        auto stop = ch::high_resolution_clock::now();
+        auto duration = ch::duration_cast<ch::microseconds>(stop - start);
+
+//        cout << "size of the data buffer: " << data.capacity() << " number of elements: " << data.size() << endl;
+        cout << "time taken: " << duration.count() << " microseconds" << endl;
+//    cout << "Hardware Concurrency: " << thread::hardware_concurrency() << endl;
+
 
         exit(1);
     }
 
-    auto start = ch::high_resolution_clock::now();
 
 
 //    ApplyFilter("/home/theko/songs/Gat1-000.wav");
 
-    auto stop = ch::high_resolution_clock::now();
-    auto duration = ch::duration_cast<ch::microseconds>(stop - start);
-
-    cout << "size of the data buffer: " << data.capacity() << " number of elements: " << data.size() << endl;
-    cout << "time taken: " << duration.count() << " microseconds" << endl;
-    cout << "Hardware Concurrency: " << thread::hardware_concurrency() << endl;
-
     return 0;
 }
 
-static int ApplyFilter(const char* filename)
+static int ApplyFilter(const char* filename, const char* filter_descr)
 {
     FilterParams params;
     AVPacket packet;
@@ -188,32 +199,4 @@ end:
 
 
     return err;
-}
-static void ThreadRun(const char* folder, uint num_threads)
-{
-
-    vector<thread> threadVect;
-    vector<fs::path> files = GetFilesInPath(folder);
-    uint threadSpread = files.size() / num_threads;
-    uint iter = 0;
-
-    for(uint x= iter; x < num_threads + iter; ++x)
-    {
-        threadVect.emplace_back(PrintFnames, files[x].c_str());
-        iter += threadSpread;
-    }
-
-
-
-    for(auto& t: threadVect)
-    {
-        t.join();
-    }
-
-}
-
-static void PrintFnames(const char* filename)
-{
-    std::this_thread::sleep_for(std::chrono::seconds(5));
-    cout << "File name: " << filename << endl;
 }

@@ -2,7 +2,7 @@
 // Created by theko on 03/12/20.
 //
 
-#include "fileops.hpp"
+#include "../inc/fileops.hpp"
 
 vector<fs::path> GetFilesInPath(const char *path) {
 
