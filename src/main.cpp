@@ -4,12 +4,14 @@
 #include <string>
 #include "../inc/filter.hpp"
 #include "../inc/fileops.hpp"
+#include "../inc/Raga.h"
 #include "taskflow/taskflow.hpp"
-//const char *filter_descr = "lowpass=frequency=8000 [b]; [b] aresample=8000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]showcqt=basefreq=65.4064:endfreq=987.77:no_video=1:storepath=/media/theko/UsbStorage1/cqt/temp.txt"; //showcqt=tc=0.17:tlength='st(0,0.17); 384*tc / (384 / ld(0) + tc*f /(1-ld(0))) + 384*tc / (tc*f / ld(0) + 384 /(1-ld(0)))':sono_v=a_weighting(f)*16:sono_h=980"; // dynaudnorm [a]; [a] lowpass=frequency=4000 [b]; [b] aresample=4000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]
+
+const char *filters_descr = "highpass=400, lowpass=4000, aresample=44100, aformat=sample_fmts=s16:channel_layouts=mono, volume=10.5, showcqt=s=960x540:fcount=1:no_video=1:no_data=0:tc=0.043:sono_v=a_weighting(f):storepath=/media/storage/audio_data/tu_mera_nahi"; //showcqt=tc=0.17:tlength='st(0,0.17); 384*tc / (384 / ld(0) + tc*f /(1-ld(0))) + 384*tc / (tc*f / ld(0) + 384 /(1-ld(0)))':sono_v=a_weighting(f)*16:sono_h=980"; // dynaudnorm [a]; [a] lowpass=frequency=4000 [b]; [b] aresample=4000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]
 //const char *filter_descr = "aresample=8000,aformat=sample_fmts=s16:channel_layouts=mono"; s=192x108:
 namespace fs = std::filesystem;
 namespace ch = std::chrono;
-
+const char* RagaIdPath = "/media/storage/RagaDataset/Carnatic/_info_/ragaId_to_ragaName_mapping.txt";
 
 
 struct AudioData{
@@ -29,7 +31,7 @@ int main(int argc, char** argv) {
     tf::Executor executor;
     tf::Taskflow taskflow;
 
-    fs::path dataRoot = "/media/theko/UsbStorage1/cqt/";
+    fs::path dataRoot = "/media/storage/Audio_data_serial";https://music.youtube.com/watch?v=lwB4vl3C040&list=OLAK5uy_kVQFecXG4xbGvRtDluS59PN9B3Xwm-7Mg
 
     if (argc == 2)
     {
@@ -52,45 +54,70 @@ int main(int argc, char** argv) {
             std::cout << "exception: " << err.what() << "\n";
         }
 */
-
-        vector<fs::path> files = GetFilesInPath(argv[1]);
-        cout << "received Vector size: " << files.size() << endl;
-
-        int iter = 0;
         auto start = ch::high_resolution_clock::now();
 
-        while(iter < files.size())
+        fs::path audioPath = fs::path(argv[1]) / "audio";
+        fs::path idPath = fs::path(argv[1]) / "_info_/ragaId_to_ragaName_mapping.txt";
+        vector<efm::Raga> ragas = efm::GetAllRagas(idPath.c_str());
+
+        vector<efm::Song> files = GetAudioFiles(audioPath.c_str());
+        cout << "Num files found: " << files.size() << endl;
+
+
+        cout << "Num Ragas found: " << ragas.size() << endl;
+
+
+        if(!files.empty())
         {
-            const char* e = files[iter].c_str();
-            string filt_text = "lowpass=frequency=8000 [b]; [b] aresample=8000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]showcqt=no_video=1:storepath=";
-            string datFileName = dataRoot.string().append(files[iter].stem().concat("_cqt.txt"));
-            filt_text.append(datFileName);
-//            cout << "Final Format string: " << filt_text << endl;
-            taskflow.emplace([e, filt_text] () {
-                cout << "File encountered: " << e << endl;
-                ApplyFilter(e, filt_text.c_str());
-            });
-            iter++;
+            for(const auto& i : files)
+            {
+                cout << "Raga: " << i.ragaId << " Artist: " << i.Artist << endl;
+                const char* filename = i.PathToFile.c_str();
+                fs::path dataPath = dataRoot / i.ragaId / i.Artist / i.SongName;
+                cout << dataPath << endl;
+                if(!fs::exists(dataPath))
+                    CreateDirectory(dataPath.c_str());
+                else
+                {
+                }
+
+                string filt_text = "highpass=400, lowpass=4000, aresample=44100, aformat=sample_fmts=s16:channel_layouts=mono, volume=10.5, showcqt=s=960x540:fcount=1:no_video=1:no_data=0:tc=0.043:sono_v=a_weighting(f):storepath=";
+                filt_text.append(dataPath);
+                cout << filt_text << endl;
+//                taskflow.emplace([filename, filt_text] () {
+                cout << "Serial Extraction Activated! \n";
+                    cout << "File encountered: " << filename << endl;
+                    ApplyFilter(filename, filt_text.c_str());
+//                }).name(i.SongName);
+            }
+
+//            executor.run(taskflow).wait();
+
+
         }
 
-        cout << "All Threads at work? \n";
-        executor.run(taskflow).wait();
         auto stop = ch::high_resolution_clock::now();
         auto duration = ch::duration_cast<ch::microseconds>(stop - start);
-
-//        cout << "size of the data buffer: " << data.capacity() << " number of elements: " << data.size() << endl;
-        cout << "time taken: " << duration.count() << " microseconds" << endl;
-//    cout << "Hardware Concurrency: " << thread::hardware_concurrency() << endl;
-
-
+        cout << "Time taken: " << (double)duration.count() / 1000000 << " seconds" << endl;
         exit(1);
     }
 
+    else {
+        auto start = ch::high_resolution_clock::now();
+        ApplyFilter("/home/abhisheknandekar/songs/tu_mera_nahi.opus", filters_descr);
+        auto stop = ch::high_resolution_clock::now();
+        auto duration = ch::duration_cast<ch::microseconds>(stop - start);
+
+        cout << "time taken: " << (double)duration.count()/1000000 << " seconds" << endl;
+
+//        cerr << "Usage: " << endl << argv[0] << " " << "/CreatePath/to/dataset/directory " << endl;
+        exit(0);
+    }
 
 
 //    ApplyFilter("/home/theko/songs/Gat1-000.wav");
-
     return 0;
+
 }
 
 static int ApplyFilter(const char* filename, const char* filter_descr)
