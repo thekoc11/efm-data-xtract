@@ -23,7 +23,8 @@ using namespace std;
 
 vector<fs::path> GetFilesInPath(const char* path);
 void PopulateAudioFiles(const char* dir, const vector<string>& extensions);
-vector<efm::Song> GetAudioFiles(const char* path);
+vector<efm::Song> GetAudioFiles(const char* path, bool small, const std::string& raga);
+vector<efm::Song> GetSongInfos(const char* path, bool small, const std::string& raga);
 void CreateDirectory(const char* dir);
 vector<byte> LoadFile(const char* filePath);
 
