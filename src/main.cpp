@@ -19,7 +19,7 @@ const char* RagaIdPath = "/media/storage/RagaDataset/Carnatic/_info_/ragaId_to_r
 
 #define PARALLEL 1
 
-static void show_usage(std::string name)
+static void show_usage(const std::string& name)
 {
     std::cerr << "Usage: " << name << " <operation(s)> SOURCES/DESTINATIONS\n "
               << "Options: \n"
@@ -28,6 +28,7 @@ static void show_usage(std::string name)
               << "\t-d, --destination DESTINATION \t Specify the destination path for the current processes\n"
               << "\t-fd, --full_dataset \t\t Use the full dataset. Disabled by default.\n"
               << "\t-h, --help \t\t display this help message\n"
+              << "\t-rf, --read_file FILENAME.txt \t\t read and interpret the notations given in the contents of FILENAME\n"
               << std::endl;
 }
 
@@ -37,6 +38,7 @@ static int FilterAndExtractData(const std::string& source, const std::string& de
 static int ProcessExtractedData(const std::string& source, const std::string& dest, bool small, const std::string& raga = "");
 //// TODO: Define a function for finding the tonic. Make a parallelised version for finding the tonic at a massive scale
 static int CreateDataset(const std::string& source, const std::string& ragaId, const std::string& dest);
+static int ReadNotations(const std::string& filename);
 
 int main(int argc, char** argv) {
 
@@ -57,6 +59,7 @@ int main(int argc, char** argv) {
         std::string sourceExtract{}, sourceProcess{};
         std::string destination{};
         std::string raag{};
+        std::string notationFile{};
         for(int i = 1; i < argc; ++i)
         {
             std::string arg = argv[i];
@@ -89,6 +92,8 @@ int main(int argc, char** argv) {
             {
                 raag = argv[++i];
             }
+            else if ((arg == "-rf") || (arg == "--read_file"))
+                notationFile = argv[++i];
         }
 
         if(!sourceExtract.empty())
@@ -373,6 +378,12 @@ static int CreateDataset(const std::string& source, const std::string& ragaId, c
 {
 //    std::vector<efm::Song> songs = GetAudioFiles(source.c_str());
 
+
+    return 0;
+}
+
+static int ReadNotations(const std::string& filename)
+{
 
     return 0;
 }
