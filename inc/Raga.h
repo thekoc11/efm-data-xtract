@@ -44,6 +44,19 @@ namespace efm {
     };
 
 
+    struct Talam{
+        Talam() {
+            countsPerBeat = 4;
+        }
+
+        explicit Talam(uint n) {
+            countsPerBeat = n;
+        }
+
+        uint countsPerBeat{};
+        std::vector<std::vector<float>> durationsAndMeasures{};
+
+    };
     template <typename T>
     bool CompareDataValuesAscending (DataItem<T>& a, DataItem<T>& b)
     {
@@ -94,6 +107,8 @@ namespace efm {
     {
         void ModifyMelodyWithF0(int64_t f);
         uint f0{};
+        Talam beatData{};
+        std::vector<int> notes{};
 
     public:
         Song() = default;
