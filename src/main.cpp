@@ -9,13 +9,12 @@
 #include "../inc/Raga.h"
 #include "taskflow/taskflow.hpp"
 
-#define CARNATIC_RAGAID_RAGA_PATH "/media/storage/RagaDataset/Carnatic/_info_/ragaId_to_ragaName_mapping.txt"
 
 const char *filters_descr = "highpass=400, lowpass=4000, aresample=44100, aformat=sample_fmts=s16:channel_layouts=mono, volume=10.5, showcqt=s=960x540:fcount=1:no_video=1:no_data=0:tc=0.043:sono_v=a_weighting(f):storepath=/media/storage/audio_data/tu_mera_nahi"; //showcqt=tc=0.17:tlength='st(0,0.17); 384*tc / (384 / ld(0) + tc*f /(1-ld(0))) + 384*tc / (tc*f / ld(0) + 384 /(1-ld(0)))':sono_v=a_weighting(f)*16:sono_h=980"; // dynaudnorm [a]; [a] lowpass=frequency=4000 [b]; [b] aresample=4000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]
 //const char *filter_descr = "aresample=8000,aformat=sample_fmts=s16:channel_layouts=mono"; s=192x108:
 namespace fs = std::filesystem;
 namespace ch = std::chrono;
-const char* RagaIdPath = "/media/storage/RagaDataset/Carnatic/_info_/ragaId_to_ragaName_mapping.txt";
+//const char* RagaIdPath = "/media/storage/RagaDataset/Carnatic/_info_/ragaId_to_ragaName_mapping.txt";
 
 #define PARALLEL 1
 
@@ -47,7 +46,7 @@ int main(int argc, char** argv) {
 
 //    std::map<std::string, string> idRagaMap = efm::Raga::InitializeVariables(CARNATIC_RAGAID_RAGA_PATH);
 //    efm::Raga::RagaIdToRagaMapGlobal = idRagaMap;
-    cout << "Total Num Ragas in the dataset:(called from main() " << efm::Raga::RagaIdToRagaMapGlobal.size() << '\n';
+//    cout << "Total Num Ragas in the dataset:(called from main() " << efm::Raga::RagaIdToRagaMapGlobal.size() << '\n';
 
     if(argc < 3)
     {
@@ -112,6 +111,10 @@ int main(int argc, char** argv) {
                 destination = sourceProcess;
             }
            ret =  ProcessExtractedData(sourceProcess, destination, small, raag);
+        }
+        if(!notationFile.empty())
+        {
+            ret = ReadNotations(notationFile);
         }
     }
 
@@ -314,7 +317,11 @@ static int ProcessExtractedData(const std::string& source, const std::string& de
 
     auto start = ch::high_resolution_clock::now();
 
-    std::map<std::string, std::string> ragaIdToRagaMap = efm::Raga::InitializeVariables(CARNATIC_RAGAID_RAGA_PATH);
+    std::string CARNATIC_RAGAID_RAGA_PATH{};
+    if (fs::exists("/media/storage/RagaDataset/Carnatic/_info_/ragaId_to_ragaName_mapping.txt"))
+       CARNATIC_RAGAID_RAGA_PATH = "/media/storage/RagaDataset/Carnatic/_info_/ragaId_to_ragaName_mapping.txt";
+
+    std::map<std::string, std::string> ragaIdToRagaMap = efm::Raga::InitializeVariables(CARNATIC_RAGAID_RAGA_PATH.c_str());
     vector<efm::Song> songs = GetSongInfos(source.c_str(), small, raga);
 
     cout << "Num Songs Encountered: " << songs.size() << endl;
@@ -384,6 +391,7 @@ static int CreateDataset(const std::string& source, const std::string& ragaId, c
 
 static int ReadNotations(const std::string& filename)
 {
-
+    efm::Song s;
+    s.ReadNotationsFromFile(filename);
     return 0;
 }

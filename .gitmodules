@@ -1,3 +1,6 @@
 [submodule "lib/taskflow"]
 	CreatePath = lib/taskflow
 	url = https://github.com/taskflow/taskflow.git
+[submodule "taskflow"]
+	path = taskflow
+	url = https://github.com/taskflow/taskflow.git

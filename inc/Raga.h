@@ -109,6 +109,7 @@ namespace efm {
         uint f0{};
         Talam beatData{};
         std::vector<int> notes{};
+        std::string Taal{};
 
     public:
         Song() = default;
@@ -129,6 +130,7 @@ namespace efm {
 
         void WriteImage();
         void WriteToFile();
+        void ReadNotationsFromFile(const std::string& filename);
     };
 
     std::vector<Raga> GetAllRagas(const char* pathToFile);

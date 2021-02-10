@@ -227,12 +227,137 @@ Song::~Song() {
     std::vector<std::vector<efm::DataItem<int64_t>>>().swap(MelodyData);
 }
 
+void Song::ReadNotationsFromFile(const string &filename) {
+    std::ifstream not_stream(filename, std::ios::binary);
+    std::string tempstr{};
+
+    char NOTES[7] = {'S', 'R', 'G', 'M', 'P', 'D', 'N'};
+    char _notes[7] = {'s', 'r', 'g', 'm', 'p', 'd', 'n'};
+    char contour_symbols[3] = {'+', '0', '-'};
+
+    std::vector<float> inMeasureDurations{};
+    std::vector<char> inMeasureContours{};
+    float totalCounts = 0;
+    vector<string> stream{};
+
+    while (std::getline(not_stream, tempstr))
+    {
+        std::istringstream iss(tempstr);
+        std::string ts{};
+        while (iss >> ts)
+        {
+            stream.push_back(ts);
+//            std::cout << "Encountered String: " << ts << endl;
+            if (ts == "Ragam:")
+            {
+                iss >> ts;
+                RagaName = ts;
+            }
+
+            else if (ts == "Talam:")
+            {
+                iss >> ts;
+                Taal = ts;
+            }
+
+            else if (ts == "Composer:")
+            {
+                iss >> ts;
+                Artist = ts;
+            }
+            else {
+                beatData.countsPerBeat = 6 ; //// TODO: Build a proper dictionary for this
+                if (ts == "||" || ts == "|")
+                {
+                    cout << "<eob | eom>    Total Counts: " << totalCounts << endl;
+                    if (totalCounts != beatData.countsPerBeat)
+                    {
+                        for(auto& d: inMeasureDurations)
+                        {
+                            d *= beatData.countsPerBeat/totalCounts;
+                        }
+                    }
+                    beatData.durationsAndMeasures.push_back(inMeasureDurations);
+                    vector<float>().swap(inMeasureDurations);
+                    totalCounts = 0;
+                }
+                float indCounts = 0;
+                auto ts_len = ts.length();
+                char current_contour;
+                for (auto& c: ts)
+                {
+                    for (int i = 0; i < 7; ++i)
+                    {
+//                        if (c == NOTES[i] || c == _notes[i])
+//                            cout << "Note Found: " << i << endl;
+
+                        if (inMeasureDurations.empty())
+                            current_contour = contour_symbols[1];
+                        else if (notes.back() > i)
+                            current_contour = contour_symbols[2];
+                        else
+                            current_contour = contour_symbols[0];
+
+
+
+                        if (c == NOTES[i])
+                        {
+                            totalCounts += 1;
+                            indCounts += 1;
+                            inMeasureDurations.push_back(1);
+                        }
+                        if (c == _notes[i])
+                        {
+                            totalCounts += 0.5;
+                            indCounts += 0.5;
+                            inMeasureDurations.push_back(0.5);
+                        }
+
+                    }
+                    if (c == ';' || c == ',')
+                    {
+                        if (c == ';')
+                        {
+                            totalCounts += 1;
+                            indCounts += 1;
+                            inMeasureDurations.push_back(1);
+
+                        }
+                        if (c == ',')
+                        {
+                            totalCounts += 0.5;
+                            indCounts += 0.5;
+                            inMeasureDurations.push_back(0.5);
+
+                        }
+                    }
+
+                }
+                cout << "Total counts in ts: " << indCounts << endl;
+                indCounts = 0;
+            }
+
+
+        }
+    }
+    if (Taal == "Rupakam")
+        beatData.countsPerBeat = 6;
+
+    std::cout << "Raga: " << RagaName << " Talam: " << Taal << " Artist: " << Artist << endl;
+    std::cout << "Talam Counts per beat " << beatData.countsPerBeat << endl;
+    std::cout << "Number of Measures detected " << beatData.durationsAndMeasures.size() << endl;
+
+}
+
 std::map<std::string, std::string> Raga::InitializeVariables(const char* filename) {
 
 
+
     std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
-    if(!ifs)
-        throw std::runtime_error(std::string(filename) + ": " + std::strerror(errno));
+    if(!ifs) {
+        std::cout << std::string(filename) + ": " + std::strerror(errno) << std::endl;
+        return std::map<std::string, std::string>{};
+    }
     auto end = ifs.tellg();
     ifs.seekg(0, std::ios::beg);
     auto size = std::size_t (end - ifs.tellg());
