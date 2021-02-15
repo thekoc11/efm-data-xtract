@@ -1,6 +1,10 @@
 [submodule "lib/taskflow"]
 	CreatePath = lib/taskflow
 	url = https://github.com/taskflow/taskflow.git
+	path = lib/taskflow
 [submodule "taskflow"]
 	path = taskflow
 	url = https://github.com/taskflow/taskflow.git
+[submodule "lib/xtensor"]
+	path = lib/xtensor
+	url = https://github.com/xtensor-stack/xtensor.git

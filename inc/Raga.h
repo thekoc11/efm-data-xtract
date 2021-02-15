@@ -109,6 +109,7 @@ namespace efm {
         uint f0{};
         Talam beatData{};
         std::vector<int> notes{};
+        std::vector<std::vector<int>> measurewiseNotes{};
         std::string Taal{};
 
     public:
@@ -120,16 +121,19 @@ namespace efm {
         std::string PathToFile{};
         std::string PathToData{};
 
+
         std::vector<efm::DataItem<double>> sum_MidiData;
         std::vector<std::vector<efm::DataItem<int64_t>>> MelodyData;
 
         void SetF0(uint f) { f0 = f; }
+        void SetCountsPerBeat(int c) { beatData.countsPerBeat = c; }
 
         void PopulateMidiData();
         void PopulateMelodyData();
 
         void WriteImage();
-        void WriteToFile();
+        void WriteEncodedSequenceToFile();
+        void WriteParsedNotationsToFile(const std::string& destinationPath);
         void ReadNotationsFromFile(const std::string& filename);
     };
 

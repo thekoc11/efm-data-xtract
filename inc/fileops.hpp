@@ -5,7 +5,7 @@
 #ifndef PROJ_FILEOPS_HPP
 #define PROJ_FILEOPS_HPP
 
-//#include <dirent.h>
+//#inc <dirent.h>
 #include <filesystem>
 #include <vector>
 #include <string>

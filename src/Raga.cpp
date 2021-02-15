@@ -7,6 +7,7 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <iomanip>
 #include "stringops.h"
 
 
@@ -59,7 +60,36 @@ void efm::Song::PopulateMelodyData() {
 }
 
 
-void Song::WriteToFile() {
+void Song::WriteParsedNotationsToFile(const std::string& destinationPath)
+{
+    fs::path dest = destinationPath;
+    std::ofstream file(dest /= (SongName +  "-parsed.txt"));
+    cout << "Notes size: " << notes.size() <<endl;
+    size_t total_beat_size = 0;
+    for (const auto& d : beatData.durationsAndMeasures)
+    {
+        total_beat_size += d.size();
+    }
+    cout << "beats and durations approx size: " << total_beat_size << endl;
+    if (beatData.durationsAndMeasures.size() != measurewiseNotes.size())
+        throw std::invalid_argument("The number of measures in the durations and notes is not consistent! ");
+
+    auto len = measurewiseNotes.size();
+    file << "Measure, Note, Duration\n";
+    std::string writableChars{};
+    for (auto i = 0; i < len; ++i)
+    {
+        auto i_len = measurewiseNotes[i].size();
+        for(auto j = 0; j < i_len; ++j)
+        {
+            writableChars = std::to_string(i) + ", " + std::to_string(measurewiseNotes[i][j]) + ", " + std::to_string(beatData.durationsAndMeasures[i][j]) + "\n";
+            file << writableChars;
+        }
+    }
+
+    cout << "Write Successful!! " << endl;
+}
+void Song::WriteEncodedSequenceToFile() {
 
     fs::path path = PathToData;
 
@@ -231,12 +261,16 @@ void Song::ReadNotationsFromFile(const string &filename) {
     std::ifstream not_stream(filename, std::ios::binary);
     std::string tempstr{};
 
+    fs::path filepath = filename;
+    SongName = filepath.stem();
+
     char NOTES[7] = {'S', 'R', 'G', 'M', 'P', 'D', 'N'};
     char _notes[7] = {'s', 'r', 'g', 'm', 'p', 'd', 'n'};
     char contour_symbols[3] = {'+', '0', '-'};
 
     std::vector<float> inMeasureDurations{};
     std::vector<char> inMeasureContours{};
+    std::vector<int> inMeasureNotes{};
     float totalCounts = 0;
     vector<string> stream{};
 
@@ -266,8 +300,8 @@ void Song::ReadNotationsFromFile(const string &filename) {
                 Artist = ts;
             }
             else {
-                beatData.countsPerBeat = 6 ; //// TODO: Build a proper dictionary for this
-                if (ts == "||" || ts == "|")
+//                beatData.countsPerBeat = 6 ; //// TODO: Build a proper dictionary for this
+                if (ts == "||" /*|| ts == "|"*/)
                 {
                     cout << "<eob | eom>    Total Counts: " << totalCounts << endl;
                     if (totalCounts != beatData.countsPerBeat)
@@ -278,42 +312,27 @@ void Song::ReadNotationsFromFile(const string &filename) {
                         }
                     }
                     beatData.durationsAndMeasures.push_back(inMeasureDurations);
+                    measurewiseNotes.push_back(inMeasureNotes);
+                    notes.insert(notes.end(), inMeasureNotes.begin(), inMeasureNotes.end());
+                    for (const auto& d:inMeasureDurations)
+                        cout << d << " " ;
+                    cout << " Size: "<< inMeasureDurations.size() << endl;
+//                    for (const auto& c: inMeasureContours)
+//                        cout << c << " ";
+//                    cout << " Size: "<< inMeasureContours.size() << endl;
+                    for (const auto &n: inMeasureNotes)
+                        cout << n << " ";
+                    cout << " Size: "<< inMeasureNotes.size() << endl;
                     vector<float>().swap(inMeasureDurations);
+                    vector<char>().swap(inMeasureContours);
+                    vector<int>().swap(inMeasureNotes);
                     totalCounts = 0;
                 }
                 float indCounts = 0;
                 auto ts_len = ts.length();
                 char current_contour;
-                for (auto& c: ts)
+                for (const auto& c: ts)
                 {
-                    for (int i = 0; i < 7; ++i)
-                    {
-//                        if (c == NOTES[i] || c == _notes[i])
-//                            cout << "Note Found: " << i << endl;
-
-                        if (inMeasureDurations.empty())
-                            current_contour = contour_symbols[1];
-                        else if (notes.back() > i)
-                            current_contour = contour_symbols[2];
-                        else
-                            current_contour = contour_symbols[0];
-
-
-
-                        if (c == NOTES[i])
-                        {
-                            totalCounts += 1;
-                            indCounts += 1;
-                            inMeasureDurations.push_back(1);
-                        }
-                        if (c == _notes[i])
-                        {
-                            totalCounts += 0.5;
-                            indCounts += 0.5;
-                            inMeasureDurations.push_back(0.5);
-                        }
-
-                    }
                     if (c == ';' || c == ',')
                     {
                         if (c == ';')
@@ -330,10 +349,60 @@ void Song::ReadNotationsFromFile(const string &filename) {
                             inMeasureDurations.push_back(0.5);
 
                         }
+                       inMeasureNotes.push_back(99999);
+                    }
+                    int comparing_element = 0;
+                    if(!inMeasureNotes.empty())
+                    {
+                        comparing_element = inMeasureNotes.back();
+                        int iter = 2;
+                        while (comparing_element == 99999) {
+                            comparing_element = inMeasureNotes[inMeasureNotes.size() - iter];
+                            iter++;
+                        }
+                    }
+                    for (int i = 0; i < 7; ++i)
+                    {
+                        if (c == NOTES[i] || c == _notes[i])
+                        {
+                            if(inMeasureNotes.empty())
+                                inMeasureNotes.push_back(i);
+                            else {
+                                if (inMeasureContours.empty())
+                                    inMeasureContours.push_back(contour_symbols[1]);
+                                else if (comparing_element > i)
+                                    inMeasureContours.push_back(contour_symbols[2]);
+                                else if (comparing_element < i)
+                                    inMeasureContours.push_back(contour_symbols[0]);
+                                else
+                                    inMeasureContours.push_back(inMeasureContours.back());
+
+
+                                if (abs(comparing_element - i) > 3 && comparing_element >= 5)
+                                    inMeasureNotes.push_back(i + 7);
+                                else if (abs(comparing_element - i) > 3 && comparing_element < 5)
+                                    inMeasureNotes.push_back(i - 7);
+                                else
+                                    inMeasureNotes.push_back(i);
+                            }
+
+                            if (c == NOTES[i])
+                            {
+                                totalCounts += 1;
+                                indCounts += 1;
+                                inMeasureDurations.push_back(1);
+                            }
+                            else if (c == _notes[i])
+                            {
+                                totalCounts += 0.5;
+                                indCounts += 0.5;
+                                inMeasureDurations.push_back(0.5);
+                            }
+                        }
                     }
 
                 }
-                cout << "Total counts in ts: " << indCounts << endl;
+//                cout << "Total counts in ts: " << indCounts << endl;
                 indCounts = 0;
             }
 
@@ -345,9 +414,11 @@ void Song::ReadNotationsFromFile(const string &filename) {
 
     std::cout << "Raga: " << RagaName << " Talam: " << Taal << " Artist: " << Artist << endl;
     std::cout << "Talam Counts per beat " << beatData.countsPerBeat << endl;
-    std::cout << "Number of Measures detected " << beatData.durationsAndMeasures.size() << endl;
+    std::cout << "Number of Measures detected " << beatData.durationsAndMeasures.size()  << " in notes " << measurewiseNotes.size() << endl;
+    std::cout << "Song Name: " << SongName << endl;
 
 }
+
 
 std::map<std::string, std::string> Raga::InitializeVariables(const char* filename) {
 

@@ -27,7 +27,8 @@ static void show_usage(const std::string& name)
               << "\t-d, --destination DESTINATION \t Specify the destination path for the current processes\n"
               << "\t-fd, --full_dataset \t\t Use the full dataset. Disabled by default.\n"
               << "\t-h, --help \t\t display this help message\n"
-              << "\t-rf, --read_file FILENAME.txt \t\t read and interpret the notations given in the contents of FILENAME\n"
+              << "\t-par, --parse FILENAME.txt \t\t read and interpret the notations given in the contents of FILENAME\n"
+              << "\t-nb, --num_beats X \t\t Number of beats in the concerned song\n"
               << std::endl;
 }
 
@@ -37,7 +38,7 @@ static int FilterAndExtractData(const std::string& source, const std::string& de
 static int ProcessExtractedData(const std::string& source, const std::string& dest, bool small, const std::string& raga = "");
 //// TODO: Define a function for finding the tonic. Make a parallelised version for finding the tonic at a massive scale
 static int CreateDataset(const std::string& source, const std::string& ragaId, const std::string& dest);
-static int ReadNotations(const std::string& filename);
+static int ReadNotations(const std::string& filename, const std::string& destination_folder, int num_beats);
 
 int main(int argc, char** argv) {
 
@@ -59,6 +60,7 @@ int main(int argc, char** argv) {
         std::string destination{};
         std::string raag{};
         std::string notationFile{};
+        int num_beats = -32768;
         for(int i = 1; i < argc; ++i)
         {
             std::string arg = argv[i];
@@ -93,6 +95,8 @@ int main(int argc, char** argv) {
             }
             else if ((arg == "-rf") || (arg == "--read_file"))
                 notationFile = argv[++i];
+            else if((arg == "-nb") || (arg == "--num_beats"))
+                num_beats = stoi(argv[++i]);
         }
 
         if(!sourceExtract.empty())
@@ -114,7 +118,15 @@ int main(int argc, char** argv) {
         }
         if(!notationFile.empty())
         {
-            ret = ReadNotations(notationFile);
+            if(destination.empty())
+            {
+                fs::path source_parent = fs::path(notationFile).parent_path();
+                destination = source_parent;
+            }
+            if(num_beats > 0)
+                ret = ReadNotations(notationFile, destination, num_beats);
+            else
+                ret = ReadNotations(notationFile, destination, 8);
         }
     }
 
@@ -362,7 +374,7 @@ static int ProcessExtractedData(const std::string& source, const std::string& de
 
             auto f0 = efm::GetFundamentalFrequency(sum_v, s);
             s.SetF0(f0.index);
-            s.WriteToFile();
+            s.WriteEncodedSequenceToFile();
             cout << "Done " << s.SongName << endl;
 #if PARALLEL == 1
         delete &s;
@@ -389,9 +401,11 @@ static int CreateDataset(const std::string& source, const std::string& ragaId, c
     return 0;
 }
 
-static int ReadNotations(const std::string& filename)
+static int ReadNotations(const std::string& filename, const std::string& destination_folder, const int num_beats)
 {
     efm::Song s;
+    s.SetCountsPerBeat(num_beats);
     s.ReadNotationsFromFile(filename);
+    s.WriteParsedNotationsToFile(destination_folder);
     return 0;
 }

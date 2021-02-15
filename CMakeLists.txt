@@ -15,7 +15,7 @@ add_subdirectory("lib/taskflow")
 #endif ()
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c++17 -stdlib=libc++")
 
-set(PROJECT_INCLUDE_PATH "./inc")
+set(PROJECT_INCLUDE_PATH "inc")
 
 #add_executable(proj  src/main.c)# src/filter.cpp src/filter.hpp src/main.cpp)
 add_executable(proj  src/filter.cpp src/main.cpp src/fileops.cpp inc/Raga.h src/Raga.cpp src/stringops.cpp inc/stringops.h src/notationops.cpp inc/notationops.h)
