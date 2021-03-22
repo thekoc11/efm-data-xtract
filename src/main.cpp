@@ -27,8 +27,8 @@ static void show_usage(const std::string& name)
               << "\t-d, --destination DESTINATION \t Specify the destination path for the current processes\n"
               << "\t-fd, --full_dataset \t\t Use the full dataset. Disabled by default.\n"
               << "\t-h, --help \t\t display this help message\n"
-              << "\t-par, --parse FILENAME.txt \t\t read and interpret the notations given in the contents of FILENAME\n"
-              << "\t-nb, --num_beats X \t\t Number of beats in the concerned song\n"
+              << "\t-rf, --parse FILENAME.txt \t\t read and interpret the notations given in the contents of FILENAME. In case the destination is not specified using -d, the final output FILENAME-parsed.txt is saved in the same folder\n"
+              << "\t-nb, --num_beats X \t\t IMPORTANT: USE THIS WHILE USING -rf; Number of beats in the concerned song (used for parsing)\n"
               << std::endl;
 }
 
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 //    std::map<std::string, string> idRagaMap = efm::Raga::InitializeVariables(CARNATIC_RAGAID_RAGA_PATH);
 //    efm::Raga::RagaIdToRagaMapGlobal = idRagaMap;
 //    cout << "Total Num Ragas in the dataset:(called from main() " << efm::Raga::RagaIdToRagaMapGlobal.size() << '\n';
-
+    cout << "Total Num Taalams found: " << efm::Raga::AllTalam.size() << "\n";
     if(argc < 3)
     {
         show_usage(argv[0]);
@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
             {
                 raag = argv[++i];
             }
-            else if ((arg == "-rf") || (arg == "--read_file"))
+            else if ((arg == "-rf") || (arg == "--read_file") || (arg == "--parse"))
                 notationFile = argv[++i];
             else if((arg == "-nb") || (arg == "--num_beats"))
                 num_beats = stoi(argv[++i]);

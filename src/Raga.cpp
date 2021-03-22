@@ -261,6 +261,12 @@ void Song::ReadNotationsFromFile(const string &filename) {
     std::ifstream not_stream(filename, std::ios::binary);
     std::string tempstr{};
 
+    if(!not_stream)
+    {
+        std::cout << std::string(filename) + ": " + std::strerror(errno) << std::endl;
+    }
+
+
     fs::path filepath = filename;
     SongName = filepath.stem();
 
@@ -273,7 +279,8 @@ void Song::ReadNotationsFromFile(const string &filename) {
     std::vector<int> inMeasureNotes{};
     float totalCounts = 0;
     vector<string> stream{};
-
+    bool start_reading = false;
+    bool taal_set = false;
     while (std::getline(not_stream, tempstr))
     {
         std::istringstream iss(tempstr);
@@ -292,14 +299,32 @@ void Song::ReadNotationsFromFile(const string &filename) {
             {
                 iss >> ts;
                 Taal = ts;
+                taal_set = true;
+            }
+
+            else if (taal_set && ts != "Composer:")
+            {
+                taalVariations.push_back(ts);
             }
 
             else if (ts == "Composer:")
             {
+                taal_set = false;
                 iss >> ts;
                 Artist = ts;
             }
-            else {
+
+            else if (ts == "<END>"){
+                start_reading = false;
+                break;
+            }
+            else if (ts == "<BEGIN>")
+            {
+                start_reading = true;
+                iss >> ts;
+            }
+            if (start_reading)
+            {
 //                beatData.countsPerBeat = 6 ; //// TODO: Build a proper dictionary for this
                 if (ts == "||" /*|| ts == "|"*/)
                 {
@@ -349,7 +374,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
                             inMeasureDurations.push_back(0.5);
 
                         }
-                       inMeasureNotes.push_back(99999);
+                        inMeasureNotes.push_back(99999);
                     }
                     int comparing_element = 0;
                     if(!inMeasureNotes.empty())
@@ -405,8 +430,6 @@ void Song::ReadNotationsFromFile(const string &filename) {
 //                cout << "Total counts in ts: " << indCounts << endl;
                 indCounts = 0;
             }
-
-
         }
     }
     if (Taal == "Rupakam")
@@ -420,10 +443,53 @@ void Song::ReadNotationsFromFile(const string &filename) {
 }
 
 
+std::vector<Talam> Raga::InitialiseTalamList(const char *filename) {
+
+    std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
+    if(!ifs) {
+        std::cout << std::string(filename) + ": " + std::strerror(errno) << std::endl;
+        return std::vector<efm::Talam>{};
+    }
+    auto end = ifs.tellg();
+    ifs.seekg(0, std::ios::beg);
+    auto size = std::size_t (end - ifs.tellg());
+
+    if(size == 0)
+        throw std::runtime_error(std::string(filename) + ": " + std::strerror(errno));
+
+    std::vector<unsigned char> buffer(size);
+
+    if(!ifs.read((char*)buffer.data(), buffer.size()))
+        throw std::runtime_error(std::string(filename) + ": " + std::strerror(errno));
+
+    bool id_done = false;
+    std::string name{};
+    std::string nBeats{};
+    std::vector<efm::Talam> retVec{};
+    for (auto i : buffer)
+    {
+        char i_char = (char) i;
+        if(i_char == '\t')
+            id_done = true;
+        if(!id_done)
+            name += i_char;
+        else if (i_char != '\t' && i_char != '\n')
+            nBeats += i_char;
+
+        if(i_char == '\n')
+        {
+            id_done = false;
+            Talam t;
+            t.name = name;
+            t.countsPerBeat = stoi(nBeats);
+            retVec.push_back(t);
+        }
+    }
+
+    return retVec;
+}
+
 std::map<std::string, std::string> Raga::InitializeVariables(const char* filename) {
-
-
-
     std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
     if(!ifs) {
         std::cout << std::string(filename) + ": " + std::strerror(errno) << std::endl;
@@ -465,8 +531,9 @@ std::map<std::string, std::string> Raga::InitializeVariables(const char* filenam
     }
 
     return ragaIdToRagaMap;
-
 }
+
+
 
 std::vector<int64_t> efm::Raga::GetExtededScale() {
 

@@ -49,11 +49,13 @@ namespace efm {
             countsPerBeat = 4;
         }
 
-        explicit Talam(uint n) {
+        explicit Talam(uint n, std::string& na) {
             countsPerBeat = n;
+            name = na;
         }
 
         uint countsPerBeat{};
+        std::string name{};
         std::vector<std::vector<float>> durationsAndMeasures{};
 
     };
@@ -98,6 +100,8 @@ namespace efm {
         std::vector<uint> Scale{};
 
         static  std::map<std::string, std::string> InitializeVariables( const char* filename);
+        static  std::vector<Talam> InitialiseTalamList(const char* filename);
+        inline static std::vector<Talam> AllTalam = InitialiseTalamList("../utils/talam_list.txt");
         inline static std::map<std::string, std::string> RagaIdToRagaMapGlobal = InitializeVariables("/media/storage/RagaDataset/Carnatic/_info_/ragaId_to_ragaName_mapping.txt");
 
         std::vector<int64_t> GetExtededScale();
@@ -111,6 +115,7 @@ namespace efm {
         std::vector<int> notes{};
         std::vector<std::vector<int>> measurewiseNotes{};
         std::string Taal{};
+        std::vector<std::string> taalVariations{};
 
     public:
         Song() = default;
