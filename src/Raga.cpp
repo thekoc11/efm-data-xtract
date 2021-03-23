@@ -257,6 +257,8 @@ Song::~Song() {
     std::vector<std::vector<efm::DataItem<int64_t>>>().swap(MelodyData);
 }
 
+
+
 void Song::ReadNotationsFromFile(const string &filename) {
     std::ifstream not_stream(filename, std::ios::binary);
     std::string tempstr{};
@@ -284,6 +286,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
     while (std::getline(not_stream, tempstr))
     {
         std::istringstream iss(tempstr);
+        int nVowels = GetNumVowelsInLine(tempstr);
         std::string ts{};
         while (iss >> ts)
         {
@@ -302,7 +305,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
                 taal_set = true;
             }
 
-            else if (taal_set && ts != "Composer:")
+            else if (taal_set && (ts != "Composer:" && ts != "<BEGIN>"))
             {
                 taalVariations.push_back(ts);
             }
@@ -321,9 +324,10 @@ void Song::ReadNotationsFromFile(const string &filename) {
             else if (ts == "<BEGIN>")
             {
                 start_reading = true;
+                taal_set = false;
                 iss >> ts;
             }
-            if (start_reading)
+            if (start_reading && nVowels == 0)
             {
 //                beatData.countsPerBeat = 6 ; //// TODO: Build a proper dictionary for this
                 if (ts == "||" /*|| ts == "|"*/)

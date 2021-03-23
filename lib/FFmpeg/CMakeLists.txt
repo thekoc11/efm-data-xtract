@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(FFmpeg)
-set(ENV{PKG_CONFIG_PATH} "/home/abhisheknandekar/libav/lib/pkgconfig")
+set(ENV{PKG_CONFIG_PATH} "/home/efm-workstation/libav/lib/pkgconfig")
 
 find_package(PkgConfig REQUIRED)
 pkg_search_module(AVCODEC REQUIRED IMPORTED_TARGET libavcodec)

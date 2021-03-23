@@ -63,3 +63,23 @@ std::string efm::Note::GetName() {
     initName(RelativeIndex);
     return Name.value + Name.accent + Name.octave;
 }
+
+int efm::GetNumVowelsInLine(const std::string& line)
+{
+    char Vowels[10] = {'a', 'A', 'e', 'E', 'i', 'I', 'o', 'O', 'u', 'U'};
+    std::istringstream iss(line);
+    std::string ts{};
+    int nVowelsInLine = 0;
+    while (iss >> ts)
+    {
+        for (const auto& c: Vowels)
+        {
+            auto found = ts.find(c);
+            if(found != std::string::npos)
+            {
+                ++nVowelsInLine;
+            }
+        }
+    }
+    return nVowelsInLine;
+}

@@ -37,5 +37,7 @@ namespace efm{
       NoteName Name{};
       uint F0{};
   };
+
+  int GetNumVowelsInLine(const std::string& line);
 };
 #endif //PROJ_STRINGOPS_H
