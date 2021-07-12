@@ -49,6 +49,8 @@ int main(int argc, char** argv) {
 //    efm::Raga::RagaIdToRagaMapGlobal = idRagaMap;
 //    cout << "Total Num Ragas in the dataset:(called from main() " << efm::Raga::RagaIdToRagaMapGlobal.size() << '\n';
     cout << "Total Num Taalams found: " << efm::Raga::AllTalam.size() << "\n";
+    cout << "Attempting to Initialize Ragas..." << endl;
+    efm::InitializeKnownRagas();
     if(argc < 3)
     {
         show_usage(argv[0]);

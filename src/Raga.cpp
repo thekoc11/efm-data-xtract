@@ -13,6 +13,21 @@
 
 using namespace efm;
 
+namespace efm {
+    std::vector<Raga> RagaDatabase{};
+    int FindInDatabase(const std::string & name)
+    {
+        int retVal = -1;
+        for(int i = 0; i < RagaDatabase.size(); ++i)
+        {
+            if( name == RagaDatabase[i].RagaName || name == RagaDatabase[i].RagaAltName)
+                retVal = i;
+        }
+
+        return retVal;
+    }
+};
+
 std::vector <efm::Raga> efm::GetAllRagas(const char *pathToFile)
 {
     vector<efm::Raga> ragas{};
@@ -283,6 +298,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
     vector<string> stream{};
     bool start_reading = false;
     bool taal_set = false;
+    bool currentRagaInDatabase = false;
     while (std::getline(not_stream, tempstr))
     {
         std::istringstream iss(tempstr);
@@ -296,6 +312,17 @@ void Song::ReadNotationsFromFile(const string &filename) {
             {
                 iss >> ts;
                 RagaName = ts;
+                auto ragaDBind = efm::FindInDatabase(RagaName);
+                if (ragaDBind != -1)
+                {
+                    RagaName = RagaDatabase[ragaDBind].RagaName;
+                    RagaAltName = RagaDatabase[ragaDBind].RagaAltName;
+                    ragaId = RagaDatabase[ragaDBind].ragaId;
+                    index = RagaDatabase[ragaDBind].index;
+                    Scale = RagaDatabase[ragaDBind].Scale;
+                    currentRagaInDatabase = true;
+                }
+
             }
 
             else if (ts == "Talam:")
@@ -395,7 +422,12 @@ void Song::ReadNotationsFromFile(const string &filename) {
                         if (c == NOTES[i] || c == _notes[i])
                         {
                             if(inMeasureNotes.empty())
-                                inMeasureNotes.push_back(i);
+                            {
+                                if (currentRagaInDatabase)
+                                    inMeasureNotes.push_back(Scale[i]);
+                                else
+                                    inMeasureNotes.push_back(i);
+                            }
                             else {
                                 if (inMeasureContours.empty())
                                     inMeasureContours.push_back(contour_symbols[1]);
@@ -406,13 +438,24 @@ void Song::ReadNotationsFromFile(const string &filename) {
                                 else
                                     inMeasureContours.push_back(inMeasureContours.back());
 
-
+                            if (currentRagaInDatabase)
+                            {
+                                if (abs(comparing_element - int(Scale[i])) > 5 && comparing_element >= 7)
+                                    inMeasureNotes.push_back(Scale[i] + 12);
+                                else if (abs(comparing_element - int(Scale[i])) > 5 && comparing_element < 7)
+                                    inMeasureNotes.push_back(Scale[i] - 12);
+                                else
+                                    inMeasureNotes.push_back(Scale[i]);
+                            }
+                            else{
                                 if (abs(comparing_element - i) > 3 && comparing_element >= 5)
                                     inMeasureNotes.push_back(i + 7);
                                 else if (abs(comparing_element - i) > 3 && comparing_element < 5)
                                     inMeasureNotes.push_back(i - 7);
                                 else
                                     inMeasureNotes.push_back(i);
+                            }
+
                             }
 
                             if (c == NOTES[i])
@@ -573,6 +616,24 @@ bool efm::CompareDataValuesDescending(DataItem<T> &a, DataItem<T> &b)
     return retVal;
 }
 
+void efm::InitializeKnownRagas() {
+
+    efm::RagaDatabase.push_back(Raga("29", "Shankarabharanam", 29, {0, 2, 4, 5, 7, 9, 11}));
+    cout << "Raga Metadata Found " << efm::RagaDatabase[Shankarabharanam].RagaName << "\n";
+    RagaDatabase.push_back(Raga("65", "Kalyani", 65, {0, 2, 4, 6, 7, 9, 11}));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase[Kalyani].RagaName << "\n";
+    RagaDatabase.push_back(Raga("8", "Hanumatodi", 8, {0, 1, 3, 5, 7, 8, 10}, "Thodi"));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+    RagaDatabase.push_back(Raga("8_d", "Dhanyasi", 8, {0, 1, 3, 5, 7, 8, 10}, "Dhanyaasi"));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+    RagaDatabase.push_back(Raga("22", "Kaharahapriya", 22, {0, 2, 3, 5, 7, 9, 10}, "Kharaharapriya"));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+    RagaDatabase.push_back(Raga("22_a", "Abhogi", 22, {0, 2, 3, 5, 100000, 9, 100000}, "Aabhogi"));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+
+
+
+}
 
 void efm::ReadDataFiles(Song &s) {
 

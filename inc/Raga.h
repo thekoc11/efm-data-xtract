@@ -5,6 +5,7 @@
 #ifndef PROJ_RAGA_H
 #define PROJ_RAGA_H
 #include <string>
+#include <utility>
 #include <vector>
 #include <map>
 #include <cstring>
@@ -91,11 +92,23 @@ namespace efm {
 
     uint GetIndexEditDistanceFromRaga(std::vector<int64_t>& v, std::vector<int64_t>& r_scale);
 
+    enum RagaNames {
+        Shankarabharanam,
+        Kalyani,
+        Hanumatodi,
+        Thodi = Hanumatodi,
+        Kharaharapriya,
+        Mayamalavahowlai
+    };
+
+
     class Raga {
     public:
         Raga() =default;
+        Raga (std::string rid, std::string name, int64_t ind, std::vector<uint> scale, std::string altName="None") : ragaId(std::move(rid)), RagaName(std::move(name)), index(ind), Scale(std::move(scale)), RagaAltName(std::move(altName)){}
         std::string ragaId{};
         std::string RagaName{};
+        std::string RagaAltName{};
         int64_t index{};
         std::vector<uint> Scale{};
 
@@ -105,10 +118,26 @@ namespace efm {
         inline static std::map<std::string, std::string> RagaIdToRagaMapGlobal = InitializeVariables("/media/storage/RagaDataset/Carnatic/_info_/ragaId_to_ragaName_mapping.txt");
 
         std::vector<int64_t> GetExtededScale();
+
+        Raga& operator=(const Raga& other)
+        {
+            // Guard self assignment
+            if (this == &other)
+                return *this;
+
+            RagaName = other.RagaName;
+            ragaId = other.ragaId;
+            RagaAltName = other.RagaAltName;
+            index = other.index;
+            Scale = other.Scale;
+
+            return *this;
+        }
     };
 
     class Song : public Raga
     {
+
         void ModifyMelodyWithF0(int64_t f);
         uint f0{};
         Talam beatData{};
@@ -143,6 +172,8 @@ namespace efm {
     };
 
     std::vector<Raga> GetAllRagas(const char* pathToFile);
+    void InitializeKnownRagas();
+
 
 
     void ReadDataFiles(Song& s);
