@@ -10,6 +10,7 @@
 #include <map>
 #include <cstring>
 #include <algorithm>
+#include <unordered_set>
 namespace efm {
 
 
@@ -105,12 +106,12 @@ namespace efm {
     class Raga {
     public:
         Raga() =default;
-        Raga (std::string rid, std::string name, int64_t ind, std::vector<uint> scale, std::string altName="None") : ragaId(std::move(rid)), RagaName(std::move(name)), index(ind), Scale(std::move(scale)), RagaAltName(std::move(altName)){}
+        Raga (std::string rid, std::string name, int64_t ind, std::vector<int> scale, std::string altName="None") : ragaId(std::move(rid)), RagaName(std::move(name)), index(ind), Scale(std::move(scale)), RagaAltName(std::move(altName)){}
         std::string ragaId{};
         std::string RagaName{};
         std::string RagaAltName{};
         int64_t index{};
-        std::vector<uint> Scale{};
+        std::vector<int> Scale{};
 
         static  std::map<std::string, std::string> InitializeVariables( const char* filename);
         static  std::vector<Talam> InitialiseTalamList(const char* filename);

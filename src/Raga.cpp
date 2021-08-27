@@ -74,6 +74,20 @@ void efm::Song::PopulateMelodyData() {
 
 }
 
+vector<int> h_CreateSubarrayAndFindRests(vector<int>& arr, int l, int r, int& numRests)
+{
+    auto beg = arr.end() - 1 - l;
+    auto end = arr.end() -  r;
+    auto * newVec = new vector<int> (beg, end);
+    numRests = GetRestCharactersInArray(*newVec);
+    auto numChars = (l - r + 1) - numRests;
+    if (numChars < 3)
+    {
+        l = l + 1;
+        *newVec = h_CreateSubarrayAndFindRests(arr, l, r, numRests);
+    }
+    return *newVec;
+}
 
 void Song::WriteParsedNotationsToFile(const std::string& destinationPath)
 {
@@ -299,6 +313,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
     bool start_reading = false;
     bool taal_set = false;
     bool currentRagaInDatabase = false;
+    int numMeasures = 0;
     while (std::getline(not_stream, tempstr))
     {
         std::istringstream iss(tempstr);
@@ -308,7 +323,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
         {
             stream.push_back(ts);
 //            std::cout << "Encountered String: " << ts << endl;
-            if (ts == "Ragam:")
+            if (ts == "Ragam:" || ts == "RAGAM")
             {
                 iss >> ts;
                 RagaName = ts;
@@ -359,7 +374,8 @@ void Song::ReadNotationsFromFile(const string &filename) {
 //                beatData.countsPerBeat = 6 ; //// TODO: Build a proper dictionary for this
                 if (ts == "||" /*|| ts == "|"*/)
                 {
-                    cout << "<eob | eom>    Total Counts: " << totalCounts << endl;
+                    numMeasures++;
+                    cout << numMeasures <<". Total Counts: " << totalCounts << endl;
                     if (totalCounts != beatData.countsPerBeat)
                     {
                         for(auto& d: inMeasureDurations)
@@ -373,9 +389,9 @@ void Song::ReadNotationsFromFile(const string &filename) {
                     for (const auto& d:inMeasureDurations)
                         cout << d << " " ;
                     cout << " Size: "<< inMeasureDurations.size() << endl;
-//                    for (const auto& c: inMeasureContours)
-//                        cout << c << " ";
-//                    cout << " Size: "<< inMeasureContours.size() << endl;
+                    for (const auto& c: inMeasureContours)
+                        cout << c << " ";
+                    cout << " Size: "<< inMeasureContours.size() << endl;
                     for (const auto &n: inMeasureNotes)
                         cout << n << " ";
                     cout << " Size: "<< inMeasureNotes.size() << endl;
@@ -385,7 +401,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
                     totalCounts = 0;
                 }
                 float indCounts = 0;
-                auto ts_len = ts.length();
+                auto ts_den = 1.0 / static_cast<double>(ts.length());
                 char current_contour;
                 for (const auto& c: ts)
                 {
@@ -424,7 +440,9 @@ void Song::ReadNotationsFromFile(const string &filename) {
                             if(inMeasureNotes.empty())
                             {
                                 if (currentRagaInDatabase)
+                                {
                                     inMeasureNotes.push_back(Scale[i]);
+                                }
                                 else
                                     inMeasureNotes.push_back(i);
                             }
@@ -446,6 +464,59 @@ void Song::ReadNotationsFromFile(const string &filename) {
                                     inMeasureNotes.push_back(Scale[i] - 12);
                                 else
                                     inMeasureNotes.push_back(Scale[i]);
+
+                                if (ragaId == "28_k")
+                                {
+
+                                    unordered_set<int> Dha = {9, 21, -3};
+                                    unordered_set<int> Pa = {7, 19, -5};
+                                    unordered_set<int> Ni = {10, 22, -2};
+                                    auto l = inMeasureNotes.size();
+                                    auto end = inMeasureNotes.end() - 1;
+                                    auto start = inMeasureNotes.end() - 3;
+                                    if (Dha.find(*end) != Dha.end())
+                                     {
+
+                                        int numRests = 0;
+                                        auto subarray = h_CreateSubarrayAndFindRests(inMeasureNotes, 2, 0, numRests);
+
+                                        vector<unordered_set<int>> seqStack = {Dha, Pa, Ni};
+
+                                        auto subStart = subarray.begin();
+                                        uint changing_index = 0;
+                                        uint index_iter = 0;
+                                        while (subStart != subarray.end()) {
+                                            if (*subStart == 99999) {
+                                                subStart++;
+                                                index_iter++;
+                                            } else if (seqStack.back().find(*subStart) != seqStack.back().end()) {
+                                                if (seqStack.back() == Ni)
+                                                    changing_index = (l - subarray.size()) + index_iter;
+                                                seqStack.pop_back();
+                                                index_iter++;
+                                                subStart++;
+
+                                            } else {
+                                                break;
+                                            }
+                                        }
+                                        if(subStart == subarray.end())
+                                         switch (inMeasureNotes[changing_index]) {
+                                             case 10:
+                                                 inMeasureNotes[changing_index] = 11;
+                                                 break;
+                                             case 22:
+                                                 inMeasureNotes[changing_index] = 23;
+                                                 break;
+                                             case -2:
+                                                 inMeasureNotes[changing_index] = -1;
+                                                 break;
+                                             default:
+                                                 break;
+                                         }
+
+                                    }
+                                }
                             }
                             else{
                                 if (abs(comparing_element - i) > 3 && comparing_element >= 5)
@@ -630,6 +701,17 @@ void efm::InitializeKnownRagas() {
     cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
     RagaDatabase.push_back(Raga("22_a", "Abhogi", 22, {0, 2, 3, 5, 100000, 9, 100000}, "Aabhogi"));
     cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+    RagaDatabase.push_back(Raga("29_h", "Hamsadhwani", 29, {0, 2, 4, 100000, 7, 100000, 11}, "Hamsadwani"));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+    RagaDatabase.push_back(Raga("15", "Mayamalavagowla", 15, {0, 1, 4, 5, 7, 8, 11}, "Mayamalavagowlai"));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+    RagaDatabase.push_back(Raga("15_m", "Malahari", 15, {0, 1, 4, 5, 7, 8, 100000}, "Malahari"));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+    RagaDatabase.push_back(Raga("28", "Harikambodhi", 28, {0, 2, 4, 5, 7, 9, 10}, "Harikambhoji"));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+    RagaDatabase.push_back(Raga("28_k", "Khamboji", 28, {0, 2, 4, 5, 7, 9, 10, 11}, "Kambhoji"));
+    cout << "Raga Metadata Found: " << efm::RagaDatabase.back().RagaName << " Alternate Name: " << efm::RagaDatabase.back().RagaAltName <<"\n";
+
 
 
 

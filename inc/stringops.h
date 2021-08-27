@@ -39,5 +39,6 @@ namespace efm{
   };
 
   int GetNumVowelsInLine(const std::string& line);
+  int GetRestCharactersInArray(const std::vector<int>& line);
 };
 #endif //PROJ_STRINGOPS_H

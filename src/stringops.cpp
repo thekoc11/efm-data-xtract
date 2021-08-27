@@ -83,3 +83,13 @@ int efm::GetNumVowelsInLine(const std::string& line)
     }
     return nVowelsInLine;
 }
+int efm::GetRestCharactersInArray(const std::vector<int>& line)
+{
+    int num_rests = 0;
+    for (auto& item: line)
+    {
+        if (item == 99999)
+            num_rests++;
+    }
+    return num_rests;
+}
