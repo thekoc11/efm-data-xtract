@@ -93,20 +93,22 @@ namespace efm {
 
     uint GetIndexEditDistanceFromRaga(std::vector<int64_t>& v, std::vector<int64_t>& r_scale);
 
+// this enum was originally made just to facilitate code readability. However, it serves no practical purpose
     enum RagaNames {
         Shankarabharanam,
         Kalyani,
         Hanumatodi,
         Thodi = Hanumatodi,
         Kharaharapriya,
-        Mayamalavahowlai
+        Mayamalavahowla
     };
 
 
     class Raga {
     public:
         Raga() =default;
-        Raga (std::string rid, std::string name, int64_t ind, std::vector<int> scale, std::string altName="None") : ragaId(std::move(rid)), RagaName(std::move(name)), index(ind), Scale(std::move(scale)), RagaAltName(std::move(altName)){}
+        Raga (std::string rid, std::string name, int64_t ind, std::vector<int> scale, std::string altName="None") : ragaId(std::move(rid)),
+        RagaName(std::move(name)), index(ind), Scale(std::move(scale)), RagaAltName(std::move(altName)){}
         std::string ragaId{};
         std::string RagaName{};
         std::string RagaAltName{};
