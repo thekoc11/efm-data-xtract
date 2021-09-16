@@ -25,7 +25,7 @@ namespace efm {
         tmp1 > tmp2 ? tmp2 : tmp1; })
 
     template <typename T>
-    struct DataItem {
+    struct DataItem { // a data item object that represents an element in a time-series
 
         DataItem() {
             value = 0;
@@ -93,7 +93,7 @@ namespace efm {
 
     uint GetIndexEditDistanceFromRaga(std::vector<int64_t>& v, std::vector<int64_t>& r_scale);
 
-// this enum was originally made just to facilitate code readability. However, it serves no practical purpose
+// this enum was originally made just to facilitate code readability. However, it serves no practical purpose whatsoever
     enum RagaNames {
         Shankarabharanam,
         Kalyani,
@@ -109,6 +109,7 @@ namespace efm {
         Raga() =default;
         Raga (std::string rid, std::string name, int64_t ind, std::vector<int> scale, std::string altName="None") : ragaId(std::move(rid)),
         RagaName(std::move(name)), index(ind), Scale(std::move(scale)), RagaAltName(std::move(altName)){}
+        // The following should be private, however, I was too lazy to implement getters and setters for them. Hopefully does not act up later.
         std::string ragaId{};
         std::string RagaName{};
         std::string RagaAltName{};
@@ -138,10 +139,10 @@ namespace efm {
         }
     };
 
-    class Song : public Raga
+    class Song : public Raga 
     {
 
-        void ModifyMelodyWithF0(int64_t f);
+        void ModifyMelodyWithF0(int64_t f); // modifies the fundamental frequency of the melody. <Look at the implementation to understand in detail>
         uint f0{};
         Talam beatData{};
         std::vector<int> notes{};
@@ -168,8 +169,8 @@ namespace efm {
         void PopulateMidiData();
         void PopulateMelodyData();
 
-        void WriteImage();
-        void WriteEncodedSequenceToFile();
+        void WriteImage(); // Writes an RGB image based on the 3d note events in the song. 
+        void WriteEncodedSequenceToFile();  // Write the raw encoded audio to a text file.
         void WriteParsedNotationsToFile(const std::string& destinationPath);
         void ReadNotationsFromFile(const std::string& filename);
     };
@@ -185,7 +186,7 @@ namespace efm {
     DataItem<double> GetFundamentalFrequency(std::vector<DataItem<double>>& v, Raga& r);
 
 
-    constexpr const uint ClampTo8Bit( const uint& v )
+    constexpr const uint ClampTo8Bit( const uint& v ) // v is some integer
     {
         return (v < 0) ? 0 : (UINT8_MAX < v) ? UINT8_MAX : v;
     }
