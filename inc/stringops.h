@@ -16,7 +16,7 @@ namespace efm{
         NoteName(std::string val, std::string acc, std::string oct)
         {
             value = std::move(val);
-            accent = std::move(acc);
+            accent = std::move(acc); // flat (represented by ) or sharp (represented by )
             octave = std::move(oct);
         }
         std::string value{};
@@ -38,7 +38,7 @@ namespace efm{
       uint F0{};
   };
 
-  int GetNumVowelsInLine(const std::string& line);
+  int GetNumVowelsInLine(const std::string& line); // Helps in the detection of the svarams in textual notations
   int GetRestCharactersInArray(const std::vector<int>& line);
 };
 #endif //PROJ_STRINGOPS_H
