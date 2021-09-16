@@ -22,9 +22,9 @@ using namespace std;
 
 
 vector<fs::path> GetFilesInPath(const char* path);
-void PopulateAudioFiles(const char* dir, const vector<string>& extensions);
-vector<efm::Song> GetAudioFiles(const char* path, bool small, const std::string& raga);
-vector<efm::Song> GetSongInfos(const char* path, bool small, const std::string& raga);
+void PopulateAudioFiles(const char* dir, const vector<string>& extensions); // Find audio files in the given dir, permitting the given file extensions.
+vector<efm::Song> GetAudioFiles(const char* path, bool small, const std::string& raga); // small signifies a small finite subset of the CompMusic Dataset
+vector<efm::Song> GetSongInfos(const char* path, bool small, const std::string& raga); // small signifies a small finite subset of the CompMusic Dataset
 void CreateDirectory(const char* dir);
 vector<byte> LoadFile(const char* filePath);
 
