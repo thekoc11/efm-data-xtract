@@ -13,7 +13,7 @@ Man Pages:
 -h, --help                      Display this help message
 -rf, --parse FILENAME.txt       Read and interpret the textual notations given in the contents of FILENAME. In case the destination is not specified using -d, the final output 
                                 FILENAME-parsed.txt is saved in the same folder
--nb, --num_beats X              IMPORTANT: USE THIS WHILE USING -rf WITHOUT FAIL; Number of beats in the concerned song (used for parsing). The default value 6. So, in case -nb is                                 not specified along side -rf, the parser assumes a 6-count beat, like the Rupakam Talam in Carnatic or Taal Dadra in Hindustani.
+-nb, --num_beats X              IMPORTANT: USE THIS WHILE USING -rf WITHOUT FAIL; Number of beats in the concerned song (used for parsing). The default value 6. So, in case -nb is not specified along side -rf, the parser assumes a 6-count beat, like the Rupakam Talam in Carnatic or Taal Dadra in Hindustani.
 ```
 
 ## Building from source
