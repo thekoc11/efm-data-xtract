@@ -14,7 +14,7 @@
 using namespace efm;
 
 namespace efm {
-    std::vector<Raga> RagaDatabase{};
+    std::vector<Raga> RagaDatabase{}; // TODO: shift this declaration to Raga.h
     int FindInDatabase(const std::string & name)
     {
         int retVal = -1;
@@ -28,7 +28,7 @@ namespace efm {
     }
 };
 
-std::vector <efm::Raga> efm::GetAllRagas(const char *pathToFile)
+std::vector <efm::Raga> efm::GetAllRagas(const char *pathToFile) // This works on the CompMusic Dataset. Can be extended to work with text as well
 {
     vector<efm::Raga> ragas{};
     vector<byte> ragaIdText = LoadFile(pathToFile);
@@ -37,22 +37,22 @@ std::vector <efm::Raga> efm::GetAllRagas(const char *pathToFile)
     {
         efm::Raga raga;
         uint iter = 0;
-        bool id_dome = false;
+        bool id_done = false;
         for(auto i : ragaIdText)
         {
             char i_char = (char)i;
             if ((char)i == '\t')
-                id_dome = true;
+                id_done = true;
 
 
-            if(!id_dome)
+            if(!id_done)
                 raga.ragaId += i_char;
             else if((char)i != '\t' && (char)i != '\n')
                 raga.RagaName += i_char;
 
             if((char)i == '\n')
             {
-                id_dome = false;
+                id_done = false;
                 ragas.push_back(raga);
                 raga = {};
 
@@ -74,19 +74,25 @@ void efm::Song::PopulateMelodyData() {
 
 }
 
-vector<int> h_CreateSubarrayAndFindRests(vector<int>& arr, int l, int r, int& numRests)
+vector<int> h_CreateSubarrayAndFindRests(vector<int>& arr, int l, int r, int& numRests) // Used in Bhashanga detection. 
+    /*
+    * For example, consider raga Kambhoji. If the phrase Ni Pa Dha (Sa) occurs, the Ni used will always be the Kakali Nishadam. However, this phrase can take many forms,
+    * e.g. npDs or Np Ds or nPd or n, P D or N ;; P D etc. In other words, an undeterministic number of rests might appear in between the notes. 
+    * 
+    * To tackle this issue, we use a recursive approach as shown below.
+    */
 {
     auto beg = arr.end() - 1 - l;
     auto end = arr.end() -  r;
-    auto * newVec = new vector<int> (beg, end);
-    numRests = GetRestCharactersInArray(*newVec);
-    auto numChars = (l - r + 1) - numRests;
-    if (numChars < 3)
+    auto * newVec = new vector<int> (beg, end); // select a subset of arr
+    numRests = GetRestCharactersInArray(*newVec);// find the number of rests in it
+    auto numChars = (l - r + 1) - numRests;// infer the number of chars
+    if (numChars < 3) // N P D are three characters
     {
         l = l + 1;
         *newVec = h_CreateSubarrayAndFindRests(arr, l, r, numRests);
     }
-    return *newVec;
+    return *newVec; // subset of arr starting with some form of N, ending with D and theres a P somewhere in the middlle
 }
 
 void Song::WriteParsedNotationsToFile(const std::string& destinationPath)
@@ -248,7 +254,7 @@ void Song::WriteImage()
 //    std::system(systemcmd.c_str());
 }
 
-void Song::ModifyMelodyWithF0(int64_t f)
+void Song::ModifyMelodyWithF0(int64_t f) // f is the highest allowed frequency in the parse (I guess...)
 {
     for(auto& row : MelodyData)
     {
@@ -289,7 +295,7 @@ Song::~Song() {
 
 
 void Song::ReadNotationsFromFile(const string &filename) {
-    std::ifstream not_stream(filename, std::ios::binary);
+    std::ifstream not_stream(filename, std::ios::binary);// not_stream is short for notation stream
     std::string tempstr{};
 
     if(!not_stream)
@@ -309,12 +315,13 @@ void Song::ReadNotationsFromFile(const string &filename) {
     std::vector<char> inMeasureContours{};
     std::vector<int> inMeasureNotes{};
     float totalCounts = 0;
-    vector<string> stream{};
+    vector<string> stream{}; // cumulative instantaneous stream
     bool start_reading = false;
     bool taal_set = false;
     bool currentRagaInDatabase = false;
     int numMeasures = 0;
-    while (std::getline(not_stream, tempstr))
+//=========================== BEGIN PARSE =================================\\
+    while (std::getline(not_stream, tempstr)) // tempstr is the line std::getline() got
     {
         std::istringstream iss(tempstr);
         int nVowels = GetNumVowelsInLine(tempstr);
@@ -323,7 +330,9 @@ void Song::ReadNotationsFromFile(const string &filename) {
         {
             stream.push_back(ts);
 //            std::cout << "Encountered String: " << ts << endl;
-            if (ts == "Ragam:" || ts == "RAGAM")
+            
+            // The following may look more elegant in a switch-case constructuct
+            if (ts == "Ragam:" || ts == "RAGAM") 
             {
                 iss >> ts;
                 RagaName = ts;
@@ -345,16 +354,17 @@ void Song::ReadNotationsFromFile(const string &filename) {
                 iss >> ts;
                 Taal = ts;
                 taal_set = true;
+                // taalDBind architecture not built yet
             }
 
             else if (taal_set && (ts != "Composer:" && ts != "<BEGIN>"))
             {
-                taalVariations.push_back(ts);
+                taalVariations.push_back(ts); // this pushes back any variations like 2 kalai or misra etc.
             }
 
             else if (ts == "Composer:")
             {
-                taal_set = false;
+                taal_set = false; // for the next iteration
                 iss >> ts;
                 Artist = ts;
             }
