@@ -9,7 +9,7 @@
 #include "../inc/Raga.h"
 #include "taskflow/taskflow.hpp"
 
-
+                            // filter params for the customized showcqt filter  
 const char *filters_descr = "highpass=400, lowpass=4000, aresample=44100, aformat=sample_fmts=s16:channel_layouts=mono, volume=10.5, showcqt=s=960x540:fcount=1:no_video=1:no_data=0:tc=0.043:sono_v=a_weighting(f):storepath=/media/storage/audio_data/tu_mera_nahi"; //showcqt=tc=0.17:tlength='st(0,0.17); 384*tc / (384 / ld(0) + tc*f /(1-ld(0))) + 384*tc / (tc*f / ld(0) + 384 /(1-ld(0)))':sono_v=a_weighting(f)*16:sono_h=980"; // dynaudnorm [a]; [a] lowpass=frequency=4000 [b]; [b] aresample=4000,aformat=sample_fmts=s16:channel_layouts=mono[c]; [c]
 //const char *filter_descr = "aresample=8000,aformat=sample_fmts=s16:channel_layouts=mono"; s=192x108:
 namespace fs = std::filesystem;
@@ -33,18 +33,18 @@ static void show_usage(const std::string& name)
 }
 
 
-static int ApplyFilter(const char* filename, const char* filter_descr);
+static int ApplyFilter(const char* filename, const char* filter_descr); // Apply the showcqt filter on filename using filter_descr as filter params
 static int FilterAndExtractData(const std::string& source, const std::string& dest, bool small, const std::string& raga = "");
 static int ProcessExtractedData(const std::string& source, const std::string& dest, bool small, const std::string& raga = "");
 //// TODO: Define a function for finding the tonic. Make a parallelised version for finding the tonic at a massive scale
-static int CreateDataset(const std::string& source, const std::string& ragaId, const std::string& dest);
-static int ReadNotations(const std::string& filename, const std::string& destination_folder, int num_beats);
+static int CreateDataset(const std::string& source, const std::string& ragaId, const std::string& dest); // Used with the CompMusic Raga dataset.
+static int ReadNotations(const std::string& filename, const std::string& destination_folder, int num_beats); // Used with textual notations
 
 int main(int argc, char** argv) {
 
     int ret = -9999;
     bool small = true;
-
+// If CARNATIC_RAGAID_RAGA_PATH to the ragaId_to_ragaName_mapping.txt file in the Carnatic folder of the CompMusic Dataset, the following lines may be uncommented
 //    std::map<std::string, string> idRagaMap = efm::Raga::InitializeVariables(CARNATIC_RAGAID_RAGA_PATH);
 //    efm::Raga::RagaIdToRagaMapGlobal = idRagaMap;
 //    cout << "Total Num Ragas in the dataset:(called from main() " << efm::Raga::RagaIdToRagaMapGlobal.size() << '\n';
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     {
         std::string sourceExtract{}, sourceProcess{};
         std::string destination{};
-        std::string raag{};
+        std::string raag{}; // stores the ragaId from the CompMusic Dataset
         std::string notationFile{};
         int num_beats = -32768;
         for(int i = 1; i < argc; ++i)
@@ -131,16 +131,10 @@ int main(int argc, char** argv) {
                 ret = ReadNotations(notationFile, destination, 8);
         }
     }
-
-
-
-
-//    ApplyFilter("/home/theko/songs/Gat1-000.wav");
     return ret;
-
 }
 
-static int ApplyFilter(const char* filename, const char* filter_descr)
+static int ApplyFilter(const char* filename, const char* filter_descr) // Applies the showcqt filter to the file `filename`, along with `filter_descr` as filter params
 {
     FilterParams params;
     AVPacket packet;
@@ -355,7 +349,7 @@ static int ProcessExtractedData(const std::string& source, const std::string& de
 
 
         efm::ReadDataFiles(s);
-
+            // Assuming that the most occuring note is the fundamental frequency. sum_MidiData calulates the frequency of every note from E0 - A7
             auto sum_v = s.sum_MidiData;
             auto melody = s.MelodyData;
 
