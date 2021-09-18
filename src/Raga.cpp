@@ -383,6 +383,9 @@ void Song::ReadNotationsFromFile(const string &filename) {
             {
 //                beatData.countsPerBeat = 6 ; //// TODO: Build a proper dictionary for this
                 if (ts == "||" /*|| ts == "|"*/)
+                   /* This block works on every single line of the svarams in the notations
+                    * the || is considered the end of the line. 
+                    */
                 {
                     numMeasures++;
                     cout << numMeasures <<". Total Counts: " << totalCounts << endl;
@@ -410,9 +413,9 @@ void Song::ReadNotationsFromFile(const string &filename) {
                     vector<int>().swap(inMeasureNotes);
                     totalCounts = 0;
                 }
-                float indCounts = 0;
+                float indCounts = 0; 
                 auto ts_den = 1.0 / static_cast<double>(ts.length());
-                char current_contour;
+                char current_contour; // pitch contour (a prediction whether the current phrase is aaroha or avaroha)
                 for (const auto& c: ts)
                 {
                     if (c == ';' || c == ',')
@@ -466,7 +469,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
                                 else
                                     inMeasureContours.push_back(inMeasureContours.back());
 
-                            if (currentRagaInDatabase)
+                            if (currentRagaInDatabase) // 12 tonal if aaroha U avaroha of the current scale is known, 7 tonal otherwise
                             {
                                 if (abs(comparing_element - int(Scale[i])) > 5 && comparing_element >= 7)
                                     inMeasureNotes.push_back(Scale[i] + 12);
@@ -475,7 +478,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
                                 else
                                     inMeasureNotes.push_back(Scale[i]);
 
-                                if (ragaId == "28_k")
+                                if (ragaId == "28_k") // if the current raga is Kambojhi, enter this block for bhashanga processing
                                 {
 
                                     unordered_set<int> Dha = {9, 21, -3};
@@ -571,7 +574,7 @@ void Song::ReadNotationsFromFile(const string &filename) {
 }
 
 
-std::vector<Talam> Raga::InitialiseTalamList(const char *filename) {
+std::vector<Talam> Raga::InitialiseTalamList(const char *filename) { // Solves the above given TODO, however, has not been tested
 
     std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
     if(!ifs) {
@@ -617,7 +620,7 @@ std::vector<Talam> Raga::InitialiseTalamList(const char *filename) {
     return retVec;
 }
 
-std::map<std::string, std::string> Raga::InitializeVariables(const char* filename) {
+std::map<std::string, std::string> Raga::InitializeVariables(const char* filename) { 
     std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
     if(!ifs) {
         std::cout << std::string(filename) + ": " + std::strerror(errno) << std::endl;
@@ -689,7 +692,7 @@ std::vector<int64_t> efm::Raga::GetExtededScale() {
 
 
 template <typename T>
-bool efm::CompareDataValuesDescending(DataItem<T> &a, DataItem<T> &b)
+bool efm::CompareDataValuesDescending(DataItem<T> &a, DataItem<T> &b) // utility for sorting
 {
     bool retVal;
     retVal = (a.value > b.value);
@@ -698,6 +701,7 @@ bool efm::CompareDataValuesDescending(DataItem<T> &a, DataItem<T> &b)
 }
 
 void efm::InitializeKnownRagas() {
+    // Add more ragas here along with aaroha U avaroha
 
     efm::RagaDatabase.push_back(Raga("29", "Shankarabharanam", 29, {0, 2, 4, 5, 7, 9, 11}));
     cout << "Raga Metadata Found " << efm::RagaDatabase[Shankarabharanam].RagaName << "\n";
@@ -727,7 +731,8 @@ void efm::InitializeKnownRagas() {
 
 }
 
-void efm::ReadDataFiles(Song &s) {
+// Deprecated
+void efm::ReadDataFiles(Song &s) { 
 
     std::vector<std::vector<efm::DataItem<double>>> v;
     DataItem<double> temp{};
@@ -842,7 +847,7 @@ uint efm::GetIndexEditDistanceFromRaga(std::vector<int64_t> &v, std::vector<int6
     return dp[m][n];
 }
 
-DataItem<double> efm::GetFundamentalFrequency(std::vector<DataItem<double>> &v, Raga &r)
+DataItem<double> efm::GetFundamentalFrequency(std::vector<DataItem<double>> &v, Raga &r) // An very basic attempt
 {
     DataItem<double> ret{};
     double min_editDistance = 999999;
