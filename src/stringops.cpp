@@ -1,7 +1,10 @@
 //
 // Created by abhisheknandekar on 08/01/21.
-//
-
+// Gives you the ability to "visualize" the notations paarsed from audio files  
+// 
+// 
+// 
+// 
 #include "stringops.h"
 
 static const std::string NoteNames[8] = {"Sa", "Ri", "Ga", "Ma", "Pa", "Dha", "Ni", "|"};
