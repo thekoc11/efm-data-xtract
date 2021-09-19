@@ -16,8 +16,8 @@ namespace efm{
         NoteName(std::string val, std::string acc, std::string oct)
         {
             value = std::move(val);
-            accent = std::move(acc); // flat (represented by ) or sharp (represented by )
-            octave = std::move(oct);
+            accent = std::move(acc); // flat (represented by !) or sharp (represented by #)
+            octave = std::move(oct); // lower (represented by _) or upper (represented by ^) relative to the fundamental (sruti)
         }
         std::string value{};
         std::string accent{};
