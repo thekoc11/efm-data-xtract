@@ -1,6 +1,16 @@
 //
 // Created by theko on 03/12/20.
 //
+// Primarily works with the CompMusic Dataset. Needs a few extensions, and so far, works with raga Bhairavi, Shankarabharanam, a few Nottusvarams and a few Celtic melodies.
+// Dataset can be downloaded from <kaggle link to be uploaded>
+// 
+// 
+// 
+// 
+// 
+// 
+// 
+// 
 
 #include <cstring>
 #include "../inc/fileops.hpp"
@@ -74,7 +84,8 @@ vector<efm::Song> GetAudioFiles(const char *path, bool small, const std::string&
     {
         efm::Song s;
 
-        if(!raga.empty())
+        if(!raga.empty()) // this if block is designed in a very brutish way; so it is eaiser to understand. A more elegant way of writing this would include using just 
+            // two branches instead of the three being used here
         {
             fs::path raga_path = path / fs::path(raga);
             for (auto i = fs::recursive_directory_iterator(raga_path); i != fs::recursive_directory_iterator(); ++i)
@@ -143,8 +154,8 @@ vector<efm::Song> GetAudioFiles(const char *path, bool small, const std::string&
         }
         else
         {
-            vector<fs::path> ragas = { path / fs::path("a2f9f182-0ceb-4531-b286-b840b47a54b8"),
-                                       path / fs::path("123b09bd-9901-4e64-a65a-10b02c9e0597"),
+            vector<fs::path> ragas = { path / fs::path("a2f9f182-0ceb-4531-b286-b840b47a54b8"), //raga Shankarabharanam, CompMusic Dataset
+                                       path / fs::path("123b09bd-9901-4e64-a65a-10b02c9e0597"), // raga Bhairavi, CompMusic Dataset
                                        path / fs::path("Celtic"),
                                        path / fs::path("Nottusvarams")};
 
