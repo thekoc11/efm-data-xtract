@@ -39,4 +39,4 @@ Finally, to run the parser:
 cd build-debug
 ./proj
 ```
-This should output a message similar to the one given in the introductory section above
+This should output a message similar to the one given in the introductory section above on the console.
