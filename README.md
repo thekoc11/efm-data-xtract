@@ -33,7 +33,7 @@ mkdir build-debug
 cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug
 cmake --build build-debug --target proj -- -j 25
 ```
-This builds the final application. For those not very familiar with `cmake` usages, `-DCMAKE_BUILD_TYPE` configures the build type, `--target` requires the name of the project (listed in CMakeLists.txt) and `-j` is the number of "jobs" or number of threads for on which the building process is run. This massively optimizes the build time.
+This builds the final application. For those not very familiar with `cmake` usages, `-DCMAKE_BUILD_TYPE` configures the build type (here, Debug), `--target` requires the name of the project (listed in CMakeLists.txt) and `-j` is the number of "jobs" or number of threads for on which the building process is run (it is usually a good practice in multicore architectures to leave around a fifth of the cores for OS function. We have a 32-core CPU, hence we left 7 cores for the OS and are using 25 cores for the compilation). This massively optimizes the build time.
 Finally, to run the parser:
 ```
 cd build-debug
