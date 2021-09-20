@@ -18,4 +18,25 @@ Man Pages:
 
 ## Building from source
 
---- To be updated shortly ---
+Before building this repo, you'll first have to build [FFMPEG](https://github.com/thekoc11/FFmpeg). This is critical, as it stores the LibAV* files to a specific folder that this project relies on. 
+
+After building FFMpeg, clone this repository to a folder of your choice:
+```git
+git clone https://github.com/thekoc11/efm-data-xtract.git 
+```
+Make sure you have CMake 3.16 installed on your sytem before building this project.
+
+Then, to build this project, run the following:
+```
+cd efm-data-xtract
+mkdir build-debug
+cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build-debug --target proj -- -j 25
+```
+This builds the final application. 
+Finally, to run the parser:
+```
+cd build-debug
+./proj
+```
+This should output a message similar to the one given in the introductory section above
